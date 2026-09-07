@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🤖 AI Recruitment System</title>
+<link rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+<style>
+/* ── RESET & VARS ── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --p:#6C63FF;--s:#FF6584;--ok:#2ecc71;--warn:#f39c12;--bad:#e74c3c;
+  --dark:#1a1a2e;--darker:#16213e;--card:#0f3460;
+  --txt:#e0e0e0;--muted:#8888aa;--border:#2a2a4a;
+  --grad:linear-gradient(135deg,#6C63FF,#FF6584);
+  --glow:0 0 20px rgba(108,99,255,.3);
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--dark);color:var(--txt);min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  position:fixed;left:0;top:0;width:240px;height:100vh;
+  background:var(--darker);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100
+}
+.logo{padding:22px 18px;border-bottom:1px solid var(--border)}
+.logo h2{font-size:17px;background:var(--grad);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;font-weight:700}
+.logo p{font-size:11px;color:var(--muted);margin-top:3px}
+.nav{flex:1;padding:15px 0;overflow-y:auto}
+.nav-sec{padding:8px 18px 4px;font-size:10px;text-transform:uppercase;
+  color:var(--muted);letter-spacing:1.5px}
+.nav a{display:flex;align-items:center;gap:10px;padding:11px 18px;
+  color:var(--muted);text-decoration:none;font-size:13.5px;
+  border-left:3px solid transparent;cursor:pointer;transition:.2s}
+.nav a:hover,.nav a.on{color:var(--p);background:rgba(108,99,255,.08);border-left-color:var(--p)}
+.nav a i{width:18px;text-align:center}
+
+/* ── MAIN ── */
+.main{margin-left:240px;padding:20px;min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 22px;background:var(--darker);border-radius:12px;
+  margin-bottom:22px;border:1px solid var(--border)
+}
+.topbar h1{font-size:20px;font-weight:700}
+.topbar p{font-size:12px;color:var(--muted)}
+.topbar-r{display:flex;align-items:center;gap:14px}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;
+  font-size:13px;font-weight:600;display:inline-flex;align-items:center;
+  gap:7px;transition:.2s;text-decoration:none}
+.btn-p{background:var(--grad);color:#fff}
+.btn-p:hover{transform:translateY(-2px);box-shadow:var(--glow)}
+.btn-o{background:transparent;border:1px solid var(--p);color:var(--p)}
+.btn-o:hover{background:var(--p);color:#fff}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-sm{padding:5px 12px;font-size:12px}
+
+/* ── STAT CARDS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
+.sc{background:var(--darker);border:1px solid var(--border);border-radius:14px;
+  padding:20px;position:relative;overflow:hidden;transition:.3s}
+.sc:hover{transform:translateY(-4px);box-shadow:var(--glow);border-color:var(--p)}
+.sc-icon{width:44px;height:44px;border-radius:10px;display:flex;
+  align-items:center;justify-content:center;font-size:20px;margin-bottom:12px}
+.sc.pu .sc-icon{background:rgba(108,99,255,.15);color:var(--p)}
+.sc.pk .sc-icon{background:rgba(255,101,132,.15);color:var(--s)}
+.sc.gn .sc-icon{background:rgba(46,204,113,.15);color:var(--ok)}
+.sc.or .sc-icon{background:rgba(243,156,18,.15);color:var(--warn)}
+.sc-val{font-size:30px;font-weight:700}
+.sc-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.sc-ch{font-size:11px;margin-top:6px;color:var(--ok)}
+
+/* ── CARD ── */
+.card{background:var(--darker);border:1px solid var(--border);
+  border-radius:14px;padding:20px;margin-bottom:18px}
+.card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card-ttl{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-ttl i{color:var(--p)}
+
+/* ── GRID HELPERS ── */
+.g2{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.g22{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:rgba(108,99,255,.08);padding:10px 14px;text-align:left;
+  font-size:11px;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:.2s}
+tbody tr:hover{background:rgba(108,99,255,.04)}
+tbody td{padding:12px 14px;font-size:13.5px}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;
+  border-radius:20px;font-size:11px;font-weight:600}
+.b-ok  {background:rgba(46,204,113,.13);color:var(--ok)}
+.b-bad {background:rgba(231,76,60,.13); color:var(--bad)}
+.b-warn{background:rgba(243,156,18,.13);color:var(--warn)}
+.b-pu  {background:rgba(108,99,255,.13);color:var(--p)}
+.b-bl  {background:rgba(52,152,219,.13);color:#3498db}
+
+/* ── SCORE BAR ── */
+.sbar{display:flex;align-items:center;gap:8px}
+.sbar-track{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.fill-ok{background:var(--ok)}.fill-warn{background:var(--warn)}.fill-bad{background:var(--bad)}
+.sval{font-size:12px;font-weight:700;min-width:30px}
+.sval.ok{color:var(--ok)}.sval.warn{color:var(--warn)}.sval.bad{color:var(--bad)}
+
+/* ── AVATAR ── */
+.av{width:36px;height:36px;border-radius:50%;background:var(--grad);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.ci{display:flex;align-items:center;gap:10px}
+.cn{font-size:13.5px;font-weight:600}.cs{font-size:11.5px;color:var(--muted)}
+
+/* ── SKILL TAG ── */
+.stag{padding:2px 9px;border-radius:20px;font-size:11px;
+  background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.25);color:var(--p)}
+.stag.m{background:rgba(46,204,113,.1);border-color:rgba(46,204,113,.25);color:var(--ok)}
+.stag.x{background:rgba(231,76,60,.1);border-color:rgba(231,76,60,.25);color:var(--bad)}
+.tags{display:flex;flex-wrap:wrap;gap:5px}
+
+/* ── JOB CARD ── */
+.jgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.jcard{background:var(--darker);border:1px solid var(--border);border-radius:14px;
+  padding:20px;transition:.3s;cursor:pointer}
+.jcard:hover{transform:translateY(-4px);border-color:var(--p);box-shadow:var(--glow)}
+.ji{width:46px;height:46px;border-radius:10px;background:var(--grad);
+  display:flex;align-items:center;justify-content:center;font-size:20px}
+.jt{font-size:15px;font-weight:700;margin:10px 0 3px}
+.jd{font-size:12px;color:var(--p)}
+.jmeta{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.jmi{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted)}
+
+/* ── SEARCH ── */
+.sfbar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.sbox{flex:1;min-width:220px;position:relative}
+.sbox input{width:100%;padding:10px 14px 10px 38px;background:var(--darker);
+  border:1px solid var(--border);border-radius:9px;color:var(--txt);
+  font-size:13px;outline:none;transition:.3s}
+.sbox input:focus{border-color:var(--p)}
+.sbox i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+select.fsel{padding:10px 13px;background:var(--darker);border:1px solid var(--border);
+  border-radius:9px;color:var(--txt);font-size:13px;outline:none;cursor:pointer}
+
+/* ── MODAL ── */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;
+  display:flex;align-items:center;justify-content:center;
+  padding:18px;backdrop-filter:blur(4px)}
+.mdl{background:var(--darker);border:1px solid var(--border);border-radius:18px;
+  width:100%;max-width:640px;max-height:88vh;overflow-y:auto;
+  animation:su .3s ease}
+@keyframes su{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mhdr{padding:22px 22px 0;display:flex;justify-content:space-between;
+  align-items:center;margin-bottom:18px}
+.mttl{font-size:18px;font-weight:700}
+.mcls{width:32px;height:32px;border-radius:50%;background:var(--border);
+  border:none;color:var(--txt);cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center}
+.mcls:hover{background:var(--bad);color:#fff}
+.mbdy{padding:0 22px 22px}
+
+/* ── FORM ── */
+.fg{margin-bottom:15px}
+.fl{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.fi{width:100%;padding:10px 13px;background:var(--card);border:1px solid var(--border);
+  border-radius:9px;color:var(--txt);font-size:13px;outline:none;transition:.3s}
+.fi:focus{border-color:var(--p)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ── AI SCORE CIRCLE ── */
+.asc{width:68px;height:68px;border-radius:50%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;border:3px solid;font-weight:700}
+.asc.ok{border-color:var(--ok);color:var(--ok);background:rgba(46,204,113,.08)}
+.asc.warn{border-color:var(--warn);color:var(--warn);background:rgba(243,156,18,.08)}
+.asc.bad{border-color:var(--bad);color:var(--bad);background:rgba(231,76,60,.08)}
+.asc .sn{font-size:17px;line-height:1}
+.asc .sl{font-size:9px;text-transform:uppercase}
+
+/* ── CHART BAR ── */
+.cbar{display:flex;flex-direction:column;gap:10px}
+.cbi{display:flex;align-items:center;gap:10px}
+.cbl{width:110px;font-size:12px;color:var(--muted);text-align:right;flex-shrink:0}
+.cbt{flex:1;height:10px;background:var(--border);border-radius:5px;overflow:hidden}
+.cbf{height:100%;border-radius:5px;background:var(--grad);transition:width 1.4s ease}
+.cbv{width:36px;font-size:12px;font-weight:600;color:var(--p)}
+
+/* ── TIMELINE ── */
+.tl{position:relative;padding-left:22px}
+.tl::before{content:'';position:absolute;left:7px;top:0;bottom:0;
+  width:2px;background:var(--border)}
+.tli{position:relative;margin-bottom:16px}
+.tldot{position:absolute;left:-18px;top:5px;width:11px;height:11px;
+  border-radius:50%;border:2px solid var(--darker)}
+.tldot.done{background:var(--ok)}.tldot.sched{background:var(--warn)}.tldot.pend{background:var(--muted)}
+.tlc{background:var(--card);border-radius:9px;padding:10px 13px}
+.tlt{font-size:13.5px;font-weight:600}
+.tlm{font-size:11.5px;color:var(--muted);margin-top:2px}
+
+/* ── PAGE SECTIONS ── */
+.pg{display:none}.pg.on{display:block}
+
+/* ── TOAST ── */
+.tc{position:fixed;top:18px;right:18px;z-index:9999;
+  display:flex;flex-direction:column;gap:8px}
+.toast{padding:12px 18px;border-radius:9px;font-size:13px;font-weight:500;
+  display:flex;align-items:center;gap:8px;min-width:260px;
+  animation:ti .3s ease}
+@keyframes ti{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.t-ok  {background:rgba(46,204,113,.12);border:1px solid var(--ok);color:var(--ok)}
+.t-err {background:rgba(231,76,60,.12); border:1px solid var(--bad);color:var(--bad)}
+.t-inf {background:rgba(108,99,255,.12);border:1px solid var(--p); color:var(--p)}
+
+/* ── RANKING CARD ── */
+.rcard{display:flex;align-items:center;gap:16px;padding:16px;
+  background:var(--card);border-radius:11px;margin-bottom:10px}
+.rmed{font-size:28px;min-width:44px;text-align:center}
+.rinfo{flex:1}
+.rname{font-size:15px;font-weight:700}
+.rsub{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <h2>🤖 RecruitAI</h2>
+    <p>Smart Recruitment System</p>
+  </div>
+  <nav class="nav">
+    <div class="nav-sec">Main</div>
+    <a onclick="go('dashboard')" class="on" id="nl-dashboard">
+      <i class="fas fa-th-large"></i> Dashboard
+    </a>
+    <a onclick="go('jobs')" id="nl-jobs">
+      <i class="fas fa-briefcase"></i> Job Openings
+    </a>
+    <a onclick="go('candidates')" id="nl-candidates">
+      <i class="fas fa-users"></i> Candidates
+    </a>
+    <div class="nav-sec">AI Tools</div>
+    <a onclick="go('screening')" id="nl-screening">
+      <i class="fas fa-robot"></i> AI Screening
+    </a>
+    <a onclick="go('ranking')" id="nl-ranking">
+      <i class="fas fa-trophy"></i> Candidate Ranking
+    </a>
+    <div class="nav-sec">Process</div>
+    <a onclick="go('interviews')" id="nl-interviews">
+      <i class="fas fa-calendar-check"></i> Interviews
+    </a>
+    <a onclick="go('hiring')" id="nl-hiring">
+      <i class="fas fa-handshake"></i> Hiring Decisions
+    </a>
+    <div class="nav-sec">Reports</div>
+    <a onclick="go('analytics')" id="nl-analytics">
+      <i class="fas fa-chart-bar"></i> Analytics
+    </a>
+    <a onclick="go('departments')" id="nl-departments">
+      <i class="fas fa-building"></i> Departments
+    </a>
+  </nav>
+</aside>
+
+<!-- ══ MAIN ═════════════════════════════════════ -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <h1 id="pt">Dashboard</h1>
+      <p  id="ps">Overview of your recruitment pipeline</p>
+    </div>
+    <div class="topbar-r">
+      <span style="font-size:12px;color:var(--muted)">
+        <i class="fas fa-clock"></i> <span id="clk"></span>
+      </span>
+      <div class="av" style="width:38px;height:38px;font-size:14px">HR</div>
+    </div>
+  </div>
+
+  <!-- ════ DASHBOARD ════ -->
+  <div id="pg-dashboard" class="pg on">
+    <div class="stats" id="dash-stats"></div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-ttl"><i class="fas fa-file-alt"></i> Recent Applications</div>
+          <button class="btn btn-o btn-sm" onclick="go('candidates')">View All</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Candidate</th><th>Applied For</th><th>AI Score</th><th>Status</th></tr></thead>
+            <tbody id="d-apps"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-ttl"><i class="fas fa-filter"></i> Hiring Funnel</div></div>
+        <div class="cbar" id="d-funnel"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-ttl"><i class="fas fa-trophy"></i> Top AI-Ranked Candidates</div>
+        <button class="btn btn-p btn-sm" onclick="go('screening')">
+          <i class="fas fa-robot"></i> AI Screening
+        </button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Rank</th><th>Candidate</th><th>Applied For</th><th>AI Score</th><th></th></tr></thead>
+          <tbody id="d-top"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ JOBS ════ -->
+  <div id="pg-jobs" class="pg">
+    <div class="sfbar">
+      <div class="sbox"><i class="fas fa-search"></i>
+        <input id="j-s" placeholder="Search jobs…" oninput="loadJobs()"/>
+      </div>
+      <select class="fsel" id="j-d" onchange="loadJobs()">
+        <option value="">All Departments</option>
+      </select>
+      <button class="btn btn-p" onclick="openM('job-m')">
+        <i class="fas fa-plus"></i> Post Job
+      </button>
+    </div>
+    <div class="jgrid" id="jobs-grid"></div>
+  </div>
+
+  <!-- ════ CANDIDATES ════ -->
+  <div id="pg-candidates" class="pg">
+    <div class="sfbar">
+      <div class="sbox"><i class="fas fa-search"></i>
+        <input id="c-s" placeholder="Search candidates…" oninput="loadCandidates()"/>
+      </div>
+      <select class="fsel" id="c-e" onchange="loadCandidates()">
+        <option value="">Any Experience</option>
+        <option value="0-2">0–2 Years</option>
+        <option value="3-5">3–5 Years</option>
+        <option value="6+">6+ Years</option>
+      </select>
+      <button class="btn btn-p" onclick="openM('cand-m')">
+        <i class="fas fa-user-plus"></i> Add Candidate
+      </button>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Candidate</th><th>Education</th><th>Exp</th>
+            <th>Skills</th><th>Certs</th><th>Applied</th><th></th></tr></thead>
+          <tbody id="cands-tbl"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ AI SCREENING ════ -->
+  <div id="pg-screening" class="pg">
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-hdr"><div class="card-ttl"><i class="fas fa-robot"></i> AI Screening Engine</div></div>
+      <div class="g22">
+        <div class="fg">
+          <label class="fl">Select Job Position</label>
+          <select class="fi" id="sc-job" onchange="runScreen()">
+            <option value="">-- Select a Job --</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Min Score Threshold: <strong id="thr-v" style="color:var(--p)">70</strong></label>
+          <input type="range" id="sc-thr" min="0" max="100" value="70"
+            style="width:100%;margin-top:12px" oninput="updThr(this.value)"/>
+        </div>
+      </div>
+      <!-- Formula -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px">
+        <div style="text-align:center;padding:13px;background:var(--card);border-radius:9px">
+          <div style="font-size:20px;font-weight:700;color:var(--p)">40</div>
+          <div style="font-size:11px;color:var(--muted)">Skill Match</div>
+        </div>
+        <div style="text-align:center;padding:13px;background:var(--card);border-radius:9px">
+          <div style="font-size:20px;font-weight:700;color:var(--ok)">25</div>
+          <div style="font-size:11px;color:var(--muted)">Experience</div>
+        </div>
+        <div style="text-align:center;padding:13px;background:var(--card);border-radius:9px">
+          <div style="font-size:20px;font-weight:700;color:var(--warn)">20</div>
+          <div style="font-size:11px;color:var(--muted)">Education/CGPA</div>
+        </div>
+        <div style="text-align:center;padding:13px;background:var(--card);border-radius:9px">
+          <div style="font-size:20px;font-weight:700;color:var(--s)">15</div>
+          <div style="font-size:11px;color:var(--muted)">Certifications</div>
+        </div>
+      </div>
+    </div>
+    <div id="sc-res"></div>
+  </div>
+
+  <!-- ════ RANKING ════ -->
+  <div id="pg-ranking" class="pg">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-ttl"><i class="fas fa-trophy"></i> Candidate Ranking</div>
+        <select class="fsel" id="rk-job" onchange="loadRanking()">
+          <option value="">-- Select Job --</option>
+        </select>
+      </div>
+      <div id="rk-content">
+        <div style="text-align:center;padding:50px;color:var(--muted)">
+          <i class="fas fa-trophy" style="font-size:44px;opacity:.2;display:block;margin-bottom:12px"></i>
+          Select a job to view rankings
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ INTERVIEWS ════ -->
+  <div id="pg-interviews" class="pg">
+    <div class="sfbar">
+      <div class="sbox"><i class="fas fa-search"></i>
+        <input id="i-s" placeholder="Search interviews…" oninput="loadInterviews()"/>
+      </div>
+      <select class="fsel" id="i-st" onchange="loadInterviews()">
+        <option value="">All Status</option>
+        <option value="Scheduled">Scheduled</option>
+        <option value="Completed">Completed</option>
+      </select>
+      <button class="btn btn-p" onclick="openM('int-m')">
+        <i class="fas fa-calendar-plus"></i> Schedule
+      </button>
+    </div>
+    <div class="card">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Candidate</th><th>Job</th><th>Round</th>
+            <th>Date & Time</th><th>Mode</th><th>Interviewer</th>
+            <th>Rating</th><th>Status</th><th></th></tr></thead>
+          <tbody id="int-tbl"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ HIRING ════ -->
+  <div id="pg-hiring" class="pg">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-ttl"><i class="fas fa-handshake"></i> Hiring Decisions</div>
+        <button class="btn btn-p btn-sm" onclick="openM('hire-m')">
+          <i class="fas fa-plus"></i> Add Decision
+        </button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Candidate</th><th>Job</th><th>Decision</th>
+            <th>Salary Offered</th><th>By</th><th>Decision Date</th><th>Joining</th></tr></thead>
+          <tbody id="hire-tbl"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ ANALYTICS ════ -->
+  <div id="pg-analytics" class="pg">
+    <div class="g22" style="margin-bottom:18px">
+      <div class="card">
+        <div class="card-hdr"><div class="card-ttl"><i class="fas fa-chart-bar"></i> Applications by Dept</div></div>
+        <div class="cbar" id="an-dept"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-ttl"><i class="fas fa-fire"></i> Top Demanded Skills</div></div>
+        <div class="cbar" id="an-skill"></div>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-hdr"><div class="card-ttl"><i class="fas fa-robot"></i> AI Score Distribution</div></div>
+        <div id="an-score"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-ttl"><i class="fas fa-user-clock"></i> Experience Distribution</div></div>
+        <div class="cbar" id="an-exp"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><div class="card-ttl"><i class="fas fa-tachometer-alt"></i> Key Metrics</div></div>
+        <div id="an-metrics"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ DEPARTMENTS ════ -->
+  <div id="pg-departments" class="pg">
+    <div class="jgrid" id="dept-grid"></div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ══ MODALS ══════════════════════════════════ -->
+
+<!-- Job Detail -->
+<div id="jd-m" class="mo" style="display:none" onclick="closeM('jd-m')">
+  <div class="mdl" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div class="mttl" id="jd-title">Job Details</div>
+      <button class="mcls" onclick="closeM('jd-m')">✕</button>
+    </div>
+    <div class="mbdy" id="jd-body"></div>
+  </div>
+</div>
+
+<!-- Candidate Detail -->
+<div id="cd-m" class="mo" style="display:none" onclick="closeM('cd-m')">
+  <div class="mdl" onclick="event.stopPropagation()">
+    <div class="mhdr">
+      <div class="mttl">Candidate Profile</div>
+      <button class="mcls" onclick="closeM('cd-m')">✕</button>
+    </div>
+    <div class="mbdy" id="cd-body"></div>
+  </div>
+</div>
+
+<!-- Add Job -->
+<div id="job-m" class="mo" style="display:none" onclick="closeM('job-m')">
+  <div class="mdl" onclick="event.stopPropagation()">
+    <div class="mhdr"><div class="mttl">📋 Post New Job</div>
+      <button class="mcls" onclick="closeM('job-m')">✕</button></div>
+    <div class="mbdy">
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Job Title *</label>
+          <input class="fi" id="nj-title" placeholder="e.g. Senior Developer"/></div>
+        <div class="fg"><label class="fl">Department *</label>
+          <select class="fi" id="nj-dept"></select></div>
+        <div class="fg"><label class="fl">Experience (Years)</label>
+          <input class="fi" id="nj-exp" type="number" placeholder="e.g. 3"/></div>
+        <div class="fg"><label class="fl">Job Type</label>
+          <select class="fi" id="nj-type">
+            <option>Full-Time</option><option>Part-Time</option><option>Contract</option>
+          </select></div>
+        <div class="fg"><label class="fl">Location</label>
+          <input class="fi" id="nj-loc" placeholder="e.g. Bangalore"/></div>
+        <div class="fg"><label class="fl">Openings</label>
+          <input class="fi" id="nj-open" type="number" placeholder="e.g. 2"/></div>
+        <div class="fg"><label class="fl">Salary Min (₹)</label>
+          <input class="fi" id="nj-smin" type="number"/></div>
+        <div class="fg"><label class="fl">Salary Max (₹)</label>
+          <input class="fi" id="nj-smax" type="number"/></div>
+      </div>
+      <div class="fg"><label class="fl">Description</label>
+        <textarea class="fi" id="nj-desc" rows="3"></textarea></div>
+      <div class="fg"><label class="fl">Deadline</label>
+        <input class="fi" id="nj-dead" type="date"/></div>
+      <button class="btn btn-p" style="width:100%" onclick="postJob()">
+        <i class="fas fa-plus"></i> Post Job
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Candidate -->
+<div id="cand-m" class="mo" style="display:none" onclick="closeM('cand-m')">
+  <div class="mdl" onclick="event.stopPropagation()">
+    <div class="mhdr"><div class="mttl">👤 Add Candidate</div>
+      <button class="mcls" onclick="closeM('cand-m')">✕</button></div>
+    <div class="mbdy">
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Full Name *</label>
+          <input class="fi" id="nc-name" placeholder="Full Name"/></div>
+        <div class="fg"><label class="fl">Email *</label>
+          <input class="fi" id="nc-email" placeholder="email@example.com"/></div>
+        <div class="fg"><label class="fl">Phone</label>
+          <input class="fi" id="nc-phone" placeholder="Phone"/></div>
+        <div class="fg"><label class="fl">Location</label>
+          <input class="fi" id="nc-loc" placeholder="City"/></div>
+        <div class="fg"><label class="fl">Experience (Yrs)</label>
+          <input class="fi" id="nc-exp" type="number"/></div>
+        <div class="fg"><label class="fl">CGPA</label>
+          <input class="fi" id="nc-cgpa" type="number" step="0.1" max="10"/></div>
+        <div class="fg"><label class="fl">Education</label>
+          <input class="fi" id="nc-edu" placeholder="e.g. B.Tech CS"/></div>
+        <div class="fg"><label class="fl">College</label>
+          <input class="fi" id="nc-col" placeholder="College name"/></div>
+      </div>
+      <div class="fg"><label class="fl">Certifications (comma separated)</label>
+        <input class="fi" id="nc-cert" placeholder="e.g. AWS, React Developer"/></div>
+      <button class="btn btn-p" style="width:100%" onclick="addCandidate()">
+        <i class="fas fa-user-plus"></i> Add Candidate
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Interview -->
+<div id="int-m" class="mo" style="display:none" onclick="closeM('int-m')">
+  <div class="mdl" onclick="event.stopPropagation()">
+    <div class="mhdr"><div class="mttl">📅 Schedule Interview</div>
+      <button class="mcls" onclick="closeM('int-m')">✕</button></div>
+    <div class="mbdy">
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Candidate</label>
+          <select class="fi" id="ni-cand"></select></div>
+        <div class="fg"><label class="fl">Job</label>
+          <select class="fi" id="ni-job"></select></div>
+        <div class="fg"><label class="fl">Round</label>
+          <select class="fi" id="ni-round">
+            <option>Technical Round 1</option><option>Technical Round 2</option>
+            <option>HR Round</option><option>Manager Round</option><option>Final Round</option>
+          </select></div>
+        <div class="fg"><label class="fl">Mode</label>
+          <select class="fi" id="ni-mode">
+            <option>Video Call</option><option>In Person</option><option>Phone</option>
+          </select></div>
+        <div class="fg"><label class="fl">Date</label>
+          <input class="fi" id="ni-date" type="date"/></div>
+        <div class="fg"><label class="fl">Time</label>
+          <input class="fi" id="ni-time" type="time"/></div>
+      </div>
+      <div class="fg"><label class="fl">Interviewer</label>
+        <input class="fi" id="ni-itvr" placeholder="Interviewer name"/></div>
+      <button class="btn btn-p" style="width:100%" onclick="schedInterview()">
+        <i class="fas fa-calendar-check"></i> Schedule Interview
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Hiring Decision -->
+<div id="hire-m" class="mo" style="display:none" onclick="closeM('hire-m')">
+  <div class="mdl" onclick="event.stopPropagation()">
+    <div class="mhdr"><div class="mttl">🤝 Add Hiring Decision</div>
+      <button class="mcls" onclick="closeM('hire-m')">✕</button></div>
+    <div class="mbdy">
+      <div class="fgrid">
+        <div class="fg"><label class="fl">Candidate</label>
+          <select class="fi" id="nh-cand"></select></div>
+        <div class="fg"><label class="fl">Job</label>
+          <select class="fi" id="nh-job"></select></div>
+        <div class="fg"><label class="fl">Decision</label>
+          <select class="fi" id="nh-dec">
+            <option>Selected</option><option>Rejected</option>
+          </select></div>
+        <div class="fg"><label class="fl">Offered Salary (₹)</label>
+          <input class="fi" id="nh-sal" type="number"/></div>
+        <div class="fg"><label class="fl">Decision Date</label>
+          <input class="fi" id="nh-ddate" type="date"/></div>
+        <div class="fg"><label class="fl">Joining Date</label>
+          <input class="fi" id="nh-jdate" type="date"/></div>
+      </div>
+      <div class="fg"><label class="fl">Decision By</label>
+        <input class="fi" id="nh-by" placeholder="Manager name"/></div>
+      <button class="btn btn-p" style="width:100%" onclick="addHiring()">
+        <i class="fas fa-check"></i> Record Decision
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Complete Interview -->
+<div id="done-m" class="mo" style="display:none" onclick="closeM('done-m')">
+  <div class="mdl" onclick="event.stopPropagation()">
+    <div class="mhdr"><div class="mttl">✅ Complete Interview</div>
+      <button class="mcls" onclick="closeM('done-m')">✕</button></div>
+    <div class="mbdy">
+      <input type="hidden" id="done-id"/>
+      <div class="fg"><label class="fl">Rating (1-5)</label>
+        <select class="fi" id="done-rating">
+          <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+          <option value="4">⭐⭐⭐⭐ Good</option>
+          <option value="3">⭐⭐⭐ Average</option>
+          <option value="2">⭐⭐ Below Average</option>
+          <option value="1">⭐ Poor</option>
+        </select></div>
+      <div class="fg"><label class="fl">Feedback</label>
+        <textarea class="fi" id="done-fb" rows="3"
+          placeholder="Interview feedback…"></textarea></div>
+      <button class="btn btn-ok" style="width:100%" onclick="completeInterview()">
+        <i class="fas fa-check"></i> Mark Completed
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="tc" id="tc"></div>
+
+<!-- ══ JAVASCRIPT ═══════════════════════════════ -->
+<script>
+// ── Helpers ──────────────────────────────────────
+const $ = id => document.getElementById(id);
+const API = async (url, opts={}) => {
+  const r = await fetch(url, {
+    headers:{"Content-Type":"application/json"}, ...opts
+  });
+  return r.json();
+};
+const sal = v => v >= 100000 ? "₹"+(v/100000).toFixed(1)+"L" : "₹"+v.toLocaleString();
+const cls = s => s >= 80 ? "ok" : s >= 60 ? "warn" : "bad";
+const stars = n => n ? "⭐".repeat(n) : "—";
+
+function toast(msg, type="ok") {
+  const ic = {ok:"check-circle", err:"times-circle", inf:"info-circle"};
+  const el = document.createElement("div");
+  el.className = `toast t-${type}`;
+  el.innerHTML = `<i class="fas fa-${ic[type]}"></i> ${msg}`;
+  $("tc").appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+function openM(id){ $(id).style.display="flex" }
+function closeM(id){ $(id).style.display="none" }
+
+function scoreCircle(score) {
+  const c = cls(score);
+  return `<div class="asc ${c}">
+    <span class="sn">${score}</span>
+    <span class="sl">score</span>
+  </div>`;
+}
+
+function scoreBar(score) {
+  const c = cls(score);
+  return `<div class="sbar">
+    <div class="sbar-track"><div class="sbar-fill fill-${c}" style="width:${score}%"></div></div>
+    <span class="sval ${c}">${score}</span>
+  </div>`;
+}
+
+function chartBars(data) {
+  const max = Math.max(...data.map(d => d.value), 1);
+  return data.map(d => `
+    <div class="cbi">
+      <div class="cbl">${d.label}</div>
+      <div class="cbt"><div class="cbf" style="width:${(d.value/max)*100}%"></div></div>
+      <div class="cbv">${d.value}</div>
+    </div>`).join("");
+}
+
+// ── Page Navigation ───────────────────────────────
+const titles = {
+  dashboard:   ["Dashboard",         "Overview of your recruitment pipeline"],
+  jobs:        ["Job Openings",      "Manage all open positions"],
+  candidates:  ["Candidates",        "View and manage all candidates"],
+  screening:   ["AI Screening",      "Automatically screen candidates with AI"],
+  ranking:     ["Candidate Ranking", "AI-powered candidate ranking"],
+  interviews:  ["Interviews",        "Schedule and manage interviews"],
+  hiring:      ["Hiring Decisions",  "Final hiring decisions and offers"],
+  analytics:   ["Analytics",         "Recruitment insights and reports"],
+  departments: ["Departments",       "All departments in the organization"],
+};
+
+const loaders = {
+  dashboard:   loadDashboard,
+  jobs:        loadJobs,
+  candidates:  loadCandidates,
+  screening:   initScreening,
+  ranking:     initRanking,
+  interviews:  loadInterviews,
+  hiring:      loadHiring,
+  analytics:   loadAnalytics,
+  departments: loadDepts,
+};
+
+function go(page) {
+  document.querySelectorAll(".pg").forEach(e => e.classList.remove("on"));
+  document.querySelectorAll(".nav a").forEach(e => e.classList.remove("on"));
+  $(`pg-${page}`).classList.add("on");
+  $(`nl-${page}`).classList.add("on");
+  $("pt").textContent = titles[page][0];
+  $("ps").textContent = titles[page][1];
+  if (loaders[page]) loaders[page]();
+}
+
+// ── Clock ─────────────────────────────────────────
+setInterval(() => { $("clk").textContent = new Date().toLocaleTimeString(); }, 1000);
+$("clk").textContent = new Date().toLocaleTimeString();
+
+// ── Dashboard ─────────────────────────────────────
+async function loadDashboard() {
+  const d = await API("/api/dashboard");
+  const s = d.stats;
+
+  $("dash-stats").innerHTML = [
+    {c:"pu", icon:"briefcase",    val:s.open_jobs,    lbl:"Open Positions",  ch:"Jobs Active"},
+    {c:"pk", icon:"users",        val:s.candidates,   lbl:"Total Candidates",ch:"In Pipeline"},
+    {c:"gn", icon:"calendar-check",val:s.interviews,  lbl:"Interviews",      ch:"Scheduled"},
+    {c:"or", icon:"handshake",    val:s.hired,        lbl:"Hired",           ch:"This Month"},
+  ].map(x=>`
+    <div class="sc ${x.c}">
+      <div class="sc-icon"><i class="fas fa-${x.icon}"></i></div>
+      <div class="sc-val">${x.val}</div>
+      <div class="sc-lbl">${x.lbl}</div>
+      <div class="sc-ch"><i class="fas fa-arrow-up"></i> ${x.ch}</div>
+    </div>`).join("");
+
+  // Recent apps
+  $("d-apps").innerHTML = d.recent_apps.map(a=>`
+    <tr>
+      <td><div class="ci">
+        <div class="av">${a.photo}</div>
+        <div><div class="cn">${a.candidate_name}</div>
+             <div class="cs">${a.location}</div></div>
+      </div></td>
+      <td style="font-size:13px">${a.job_title}</td>
+      <td>${scoreBar(a.ai_score)}</td>
+      <td><span class="badge b-pu">${a.status}</span></td>
+    </tr>`).join("");
+
+  // Funnel
+  const maxF = Math.max(...d.funnel.map(f=>f.value),1);
+  $("d-funnel").innerHTML = d.funnel.map(f=>`
+    <div class="cbi">
+      <div class="cbl">${f.label}</div>
+      <div class="cbt"><div class="cbf" style="width:${(f.value/maxF)*100}%"></div></div>
+      <div class="cbv">${f.value}</div>
+    </div>`).join("");
+
+  // Top candidates
+  const medals = ["🥇","🥈","🥉"];
+  $("d-top").innerHTML = d.top_candidates.map((c,i)=>`
+    <tr>
+      <td style="font-size:20px;text-align:center">${medals[i]||"#"+(i+1)}</td>
+      <td><div class="ci">
+        <div class="av">${c.photo}</div>
+        <div><div class="cn">${c.candidate_name}</div>
+             <div class="cs">${c.location}</div></div>
+      </div></td>
+      <td style="font-size:13px">${c.job_title}</td>
+      <td>${scoreCircle(c.ai_score)}</td>
+      <td><button class="btn btn-p btn-sm" onclick="showCand(${c.candidate_id})">View</button></td>
+    </tr>`).join("");
+}
+
+// ── Jobs ──────────────────────────────────────────
+const deptIcons = {
+  Engineering:"💻","Data Science":"📊","Product Management":"📋",
+  Marketing:"📣","Human Resources":"👥",Finance:"💰",Design:"🎨",DevOps:"⚙️"
+};
+
+async function loadJobs() {
+  const s = $("j-s")?.value||"";
+  const d = $("j-d")?.value||"";
+  const jobs = await API(`/api/jobs?search=${s}&dept=${d}`);
+
+  // Populate dept filter once
+  if ($("j-d").options.length <= 1) {
+    const depts = await API("/api/departments");
+    depts.forEach(dep=>{
+      const o=document.createElement("option");
+      o.value=dep.dept_name; o.textContent=dep.dept_name;
+      $("j-d").appendChild(o);
+    });
+  }
+  // Populate add-job dept select
+  if ($("nj-dept").options.length===0) {
+    const depts = await API("/api/departments");
+    depts.forEach(dep=>{
+      const o=document.createElement("option");
+      o.value=dep.dept_id; o.textContent=dep.dept_name;
+      $("nj-dept").appendChild(o);
+    });
+  }
+
+  $("jobs-grid").innerHTML = jobs.map(j=>`
+    <div class="jcard" onclick="showJob(${j.job_id})">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="ji">${deptIcons[j.department]||"🏢"}</div>
+        <span class="badge ${j.status==='Open'?'b-ok':'b-bad'}">${j.status}</span>
+      </div>
+      <div class="jt">${j.title}</div>
+      <div class="jd">${j.department}</div>
+      <div class="jmeta">
+        <div class="jmi"><i class="fas fa-map-marker-alt"></i> ${j.location}</div>
+        <div class="jmi"><i class="fas fa-clock"></i> ${j.experience_required}+ yrs</div>
+        <div class="jmi"><i class="fas fa-users"></i> ${j.openings} openings</div>
+        <div class="jmi"><i class="fas fa-money-bill"></i>
+          ${sal(j.salary_min)}–${sal(j.salary_max)}</div>
+      </div>
+      <div class="tags">
+        ${j.skill_names.slice(0,4).map(s=>`<span class="stag">${s}</span>`).join("")}
+        ${j.skill_names.length>4?`<span class="stag">+${j.skill_names.length-4}</span>`:""}
+      </div>
+      <div style="display:flex;justify-content:space-between;
+                  padding-top:12px;border-top:1px solid var(--border);margin-top:12px">
+        <span style="font-size:11.5px;color:var(--muted)">
+          <i class="fas fa-file-alt"></i> ${j.app_count} apps
+        </span>
+        <span style="font-size:11.5px;color:var(--muted)">
+          <i class="fas fa-calendar"></i> Due: ${j.deadline}
+        </span>
+      </div>
+    </div>`).join("");
+}
+
+async function showJob(id) {
+  const jobs = await API(`/api/jobs?search=`);
+  const j    = jobs.find(x=>x.job_id===id);
+  if(!j) return;
+  $("jd-title").textContent = j.title;
+  $("jd-body").innerHTML = `
+    <div class="g22" style="margin-bottom:16px">
+      <div><span style="color:var(--muted)">Department:</span> <strong>${j.department}</strong></div>
+      <div><span style="color:var(--muted)">Location:</span>   <strong>${j.location}</strong></div>
+      <div><span style="color:var(--muted)">Experience:</span> <strong>${j.experience_required}+ yrs</strong></div>
+      <div><span style="color:var(--muted)">Type:</span>       <strong>${j.job_type}</strong></div>
+      <div><span style="color:var(--muted)">Salary:</span>
+           <strong>${sal(j.salary_min)} – ${sal(j.salary_max)}</strong></div>
+      <div><span style="color:var(--muted)">Openings:</span>   <strong>${j.openings}</strong></div>
+      <div><span style="color:var(--muted)">Deadline:</span>   <strong>${j.deadline}</strong></div>
+      <div><span style="color:var(--muted)">Applications:</span> <strong>${j.app_count}</strong></div>
+    </div>
+    <p style="font-size:13.5px;line-height:1.6;margin-bottom:16px">${j.description}</p>
+    <div class="tags" style="margin-bottom:16px">
+      ${j.skill_names.map(s=>`<span class="stag">${s}</span>`).join("")}
+    </div>
+    <button class="btn btn-p" style="width:100%"
+      onclick="closeM('jd-m');go('screening')">
+      <i class="fas fa-robot"></i> Run AI Screening
+    </button>`;
+  openM("jd-m");
+}
+
+async function postJob() {
+  const title = $("nj-title").value.trim();
+  if(!title){ toast("Please enter job title","err"); return; }
+  const deptSel = $("nj-dept");
+  const deptOpt = deptSel.options[deptSel.selectedIndex];
+  const r = await API("/api/jobs", {
+    method:"POST",
+    body: JSON.stringify({
+      title, dept_id: deptSel.value, department: deptOpt.text,
+      experience_required: $("nj-exp").value||0,
+      job_type: $("nj-type").value,
+      location: $("nj-loc").value,
+      openings: $("nj-open").value||1,
+      salary_min: $("nj-smin").value||500000,
+      salary_max: $("nj-smax").value||1000000,
+      description: $("nj-desc").value,
+      deadline: $("nj-dead").value||"2024-12-31",
+    })
+  });
+  closeM("job-m"); loadJobs(); toast(r.message);
+}
+
+// ── Candidates ────────────────────────────────────
+async function loadCandidates() {
+  const s = $("c-s")?.value||"";
+  const e = $("c-e")?.value||"";
+  const cands = await API(`/api/candidates?search=${s}&exp=${e}`);
+
+  $("cands-tbl").innerHTML = cands.map(c=>`
+    <tr>
+      <td><div class="ci">
+        <div class="av">${c.photo}</div>
+        <div><div class="cn">${c.name}</div>
+             <div class="cs">${c.email}</div></div>
+      </div></td>
+      <td><div style="font-size:13px">${c.education}</div>
+          <div style="font-size:11.5px;color:var(--muted)">${c.college}</div>
+          <div style="font-size:11.5px;color:var(--p)">CGPA: ${c.cgpa}</div></td>
+      <td><strong>${c.experience}</strong>
+          <span style="color:var(--muted);font-size:12px"> yrs</span></td>
+      <td><div class="tags">
+        ${c.skill_names.slice(0,3).map(s=>`<span class="stag">${s}</span>`).join("")}
+        ${c.skill_names.length>3?`<span class="stag">+${c.skill_names.length-3}</span>`:""}
+      </div></td>
+      <td style="font-size:12px">
+        ${c.certifications.slice(0,2).map(x=>
+          `<div style="color:var(--warn)"><i class="fas fa-certificate"></i> ${x}</div>`
+        ).join("")}
+      </td>
+      <td style="font-size:12px;color:var(--muted)">${c.applied_date}</td>
+      <td><button class="btn btn-p btn-sm" onclick="showCand(${c.candidate_id})">
+        <i class="fas fa-eye"></i> View</button></td>
+    </tr>`).join("");
+}
+
+async function showCand(id) {
+  const c = await API(`/api/candidates/${id}`);
+  const medals = ["🥇","🥈","🥉"];
+  $("cd-body").innerHTML = `
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:16px;padding:16px;
+                background:var(--card);border-radius:11px;margin-bottom:18px">
+      <div class="av" style="width:62px;height:62px;font-size:22px">${c.photo}</div>
+      <div style="flex:1">
+        <h2 style="font-size:18px">${c.name}</h2>
+        <div style="color:var(--muted);font-size:12px;margin-top:3px">
+          <i class="fas fa-envelope"></i> ${c.email} &nbsp;|&nbsp;
+          <i class="fas fa-phone"></i> ${c.phone}
+        </div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px">
+          <i class="fas fa-map-marker-alt"></i> ${c.location} &nbsp;|&nbsp;
+          <i class="fas fa-briefcase"></i> ${c.experience} yrs experience
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--muted)">CGPA</div>
+        <div style="font-size:26px;font-weight:700;color:var(--p)">${c.cgpa}</div>
+      </div>
+    </div>
+    <!-- Education -->
+    <h4 style="color:var(--p);margin-bottom:8px"><i class="fas fa-graduation-cap"></i> Education</h4>
+    <div style="background:var(--card);padding:11px;border-radius:9px;margin-bottom:16px">
+      <div style="font-weight:600">${c.education}</div>
+      <div style="color:var(--muted);font-size:12px">${c.college}</div>
+    </div>
+    <!-- Skills -->
+    <h4 style="color:var(--p);margin-bottom:8px"><i class="fas fa-tools"></i> Skills</h4>
+    <div class="tags" style="margin-bottom:16px">
+      ${c.skill_names.map(s=>`<span class="stag">${s}</span>`).join("")}
+    </div>
+    <!-- Certifications -->
+    <h4 style="color:var(--p);margin-bottom:8px"><i class="fas fa-certificate"></i> Certifications</h4>
+    <div class="tags" style="margin-bottom:16px">
+      ${c.certifications.map(x=>`<span class="badge b-warn"><i class="fas fa-award"></i> ${x}</span>`).join("")}
+    </div>
+    <!-- Applications -->
+    ${c.applications.length?`
+    <h4 style="color:var(--p);margin-bottom:8px"><i class="fas fa-file-alt"></i> Applications</h4>
+    ${c.applications.map(a=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;
+                  padding:11px;background:var(--card);border-radius:9px;margin-bottom:7px">
+        <div><div style="font-weight:600">${a.job_title}</div>
+             <div style="font-size:11.5px;color:var(--muted)">${a.applied_date}</div></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          ${scoreCircle(a.ai_score)}
+          <span class="badge b-pu">${a.status}</span>
+        </div>
+      </div>`).join("")}`:""}
+    <!-- Interviews -->
+    ${c.interviews.length?`
+    <h4 style="color:var(--p);margin:14px 0 8px"><i class="fas fa-calendar-check"></i> Interviews</h4>
+    <div class="tl">
+      ${c.interviews.map(i=>`
+        <div class="tli">
+          <div class="tldot ${i.status==='Completed'?'done':'sched'}"></div>
+          <div class="tlc">
+            <div class="tlt">${i.round}</div>
+            <div class="tlm">${i.date} ${i.time} • ${i.mode} • ${i.interviewer}</div>
+            ${i.feedback?`<div style="font-size:12px;color:var(--ok);margin-top:4px">💬 ${i.feedback}</div>`:""}
+            ${i.rating?`<div>${stars(i.rating)}</div>`:""}
+          </div>
+        </div>`).join("")}
+    </div>`:""}`;
+  openM("cd-m");
+}
+
+async function addCandidate() {
+  const name = $("nc-name").value.trim();
+  if(!name){ toast("Please enter name","err"); return; }
+  const r = await API("/api/candidates", {
+    method:"POST",
+    body: JSON.stringify({
+      name, email:$("nc-email").value, phone:$("nc-phone").value,
+      location:$("nc-loc").value, experience:$("nc-exp").value||0,
+      education:$("nc-edu").value, college:$("nc-col").value,
+      cgpa:$("nc-cgpa").value||7.0, certifications:$("nc-cert").value,
+    })
+  });
+  closeM("cand-m"); loadCandidates(); toast(r.message);
+}
+
+// ── AI Screening ──────────────────────────────────
+async function initScreening() {
+  const jobs = await API("/api/jobs");
+  $("sc-job").innerHTML = '<option value="">-- Select a Job --</option>' +
+    jobs.map(j=>`<option value="${j.job_id}">${j.title}</option>`).join("");
+}
+
+function updThr(v) {
+  $("thr-v").textContent = v;
+  runScreen();
+}
+
+async function runScreen() {
+  const jid = $("sc-job").value;
+  const thr = $("sc-thr").value;
+  if(!jid){ $("sc-res").innerHTML=""; return; }
+
+  const d = await API(`/api/screen/${jid}?threshold=${thr}`);
+  const medals = ["🥇","🥈","🥉"];
+
+  $("sc-res").innerHTML = `
+    <!-- Summary Stats -->
+    <div class="stats" style="margin-bottom:18px">
+      <div class="sc pu"><div class="sc-icon"><i class="fas fa-users"></i></div>
+        <div class="sc-val">${d.stats.total}</div><div class="sc-lbl">Total Applicants</div></div>
+      <div class="sc gn"><div class="sc-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="sc-val">${d.stats.qualified}</div><div class="sc-lbl">Qualified</div></div>
+      <div class="sc pk"><div class="sc-icon"><i class="fas fa-times-circle"></i></div>
+        <div class="sc-val">${d.stats.rejected}</div><div class="sc-lbl">Not Qualified</div></div>
+      <div class="sc or"><div class="sc-icon"><i class="fas fa-star"></i></div>
+        <div class="sc-val">${d.stats.top_score}</div><div class="sc-lbl">Top Score</div></div>
+    </div>
+
+    <!-- Qualified -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-ttl">
+          <i class="fas fa-check-circle" style="color:var(--ok)"></i>
+          Qualified Candidates
+          <span class="badge b-ok">${d.stats.qualified}</span>
+        </div>
+      </div>
+      ${d.qualified.length===0
+        ?`<p style="text-align:center;color:var(--muted);padding:28px">
+            No candidates meet the threshold. Try lowering it.</p>`
+        :`<div class="tbl-wrap"><table>
+           <thead><tr><th>Rank</th><th>Candidate</th><th>Exp</th>
+             <th>Matched Skills</th><th>Missing Skills</th><th>AI Score</th><th></th></tr></thead>
+           <tbody>
+             ${d.qualified.map((c,i)=>`
+               <tr>
+                 <td style="font-size:20px;text-align:center">
+                   ${medals[i]||"#"+(i+1)}
+                 </td>
+                 <td><div class="ci">
+                   <div class="av">${c.photo}</div>
+                   <div><div class="cn">${c.name}</div>
+                        <div class="cs">${c.college} • CGPA: ${c.cgpa}</div></div>
+                 </div></td>
+                 <td><strong>${c.experience}</strong> yrs
+                   ${c.experience>=d.job.experience_required
+                     ?`<span class="badge b-ok" style="margin-left:5px">✓</span>`
+                     :`<span class="badge b-warn" style="margin-left:5px">-</span>`}
+                 </td>
+                 <td><div class="tags">
+                   ${c.matched_names.map(s=>`<span class="stag m">✓ ${s}</span>`).join("")}
+                 </div></td>
+                 <td><div class="tags">
+                   ${c.missing_names.map(s=>`<span class="stag x">✗ ${s}</span>`).join("")}
+                   ${c.missing_names.length===0
+                     ?`<span style="color:var(--ok);font-size:12px">All matched!</span>`:""}
+                 </div></td>
+                 <td>${scoreCircle(c.ai_score)}</td>
+                 <td><button class="btn btn-p btn-sm" onclick="showCand(${c.candidate_id})">
+                   Profile</button></td>
+               </tr>`).join("")}
+           </tbody></table></div>`}
+    </div>
+
+    <!-- Rejected -->
+    ${d.rejected.length?`
+    <div class="card">
+      <div class="card-hdr">
+        <div class="card-ttl">
+          <i class="fas fa-times-circle" style="color:var(--bad)"></i>
+          Did Not Qualify <span class="badge b-bad">${d.rejected.length}</span>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Candidate</th><th>Experience</th><th>AI Score</th><th>Gap</th></tr></thead>
+        <tbody>
+          ${d.rejected.map(c=>`
+            <tr>
+              <td><div class="ci">
+                <div class="av">${c.photo}</div>
+                <div><div class="cn">${c.name}</div>
+                     <div class="cs">${c.location}</div></div>
+              </div></td>
+              <td>${c.experience} yrs</td>
+              <td><span class="sval bad">${c.ai_score}</span></td>
+              <td style="color:var(--bad);font-size:12px">
+                ${thr - c.ai_score} pts below threshold</td>
+            </tr>`).join("")}
+        </tbody></table></div>
+    </div>`:""}`;
+}
+
+// ── Ranking ───────────────────────────────────────
+async function initRanking() {
+  const jobs = await API("/api/jobs");
+  $("rk-job").innerHTML = '<option value="">-- Select Job --</option>' +
+    jobs.map(j=>`<option value="${j.job_id}">${j.title}</option>`).join("");
+}
+
+async function loadRanking() {
+  const jid = $("rk-job").value;
+  if(!jid) return;
+  const d       = await API(`/api/screen/${jid}?threshold=0`);
+  const ranked  = [...d.qualified, ...d.rejected]
+    .sort((a,b)=>b.ai_score-a.ai_score);
+  const medals  = ["🥇","🥈","🥉"];
+  const borders = ["gold","silver","#cd7f32"];
+
+  $("rk-content").innerHTML = ranked.map((c,i)=>`
+    <div class="rcard" style="border-left:4px solid ${borders[i]||'var(--border)'}">
+      <div class="rmed">${medals[i]||`<span style="color:var(--muted)">#${i+1}</span>`}</div>
+      <div class="av" style="width:48px;height:48px;font-size:16px">${c.photo}</div>
+      <div class="rinfo">
+        <div class="rname">${c.name}</div>
+        <div class="rsub">${c.education} • ${c.college} • ${c.experience} yrs</div>
+        <div class="tags" style="margin-top:6px">
+          ${c.matched_names.map(s=>`<span class="stag m">✓ ${s}</span>`).join("")}
+          ${c.missing_names.map(s=>`<span class="stag x">✗ ${s}</span>`).join("")}
+        </div>
+      </div>
+      <div style="text-align:center">
+        ${scoreCircle(c.ai_score)}
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">
+          ${c.matched_names.length}/${c.matched_names.length+c.missing_names.length} skills
+        </div>
+      </div>
+      <button class="btn btn-o btn-sm" onclick="showCand(${c.candidate_id})">View</button>
+    </div>`).join("");
+}
+
+// ── Interviews ────────────────────────────────────
+async function loadInterviews() {
+  const s  = $("i-s")?.value||"";
+  const st = $("i-st")?.value||"";
+  const data = await API(`/api/interviews?search=${s}&status=${st}`);
+
+  // Populate schedule modal dropdowns
+  if($("ni-cand").options.length===0) {
+    const cands = await API("/api/candidates");
+    $("ni-cand").innerHTML = cands.map(c=>
+      `<option value="${c.candidate_id}">${c.name}</option>`).join("");
+  }
+  if($("ni-job").options.length===0) {
+    const jobs = await API("/api/jobs");
+    $("ni-job").innerHTML = jobs.map(j=>
+      `<option value="${j.job_id}">${j.title}</option>`).join("");
+  }
+
+  $("int-tbl").innerHTML = data.map(i=>`
+    <tr>
+      <td><div class="ci">
+        <div class="av">${i.photo}</div>
+        <div><div class="cn">${i.candidate_name}</div></div>
+      </div></td>
+      <td style="font-size:13px">${i.job_title}</td>
+      <td><span class="badge b-pu">${i.round}</span></td>
+      <td><div style="font-size:13px;font-weight:600">${i.date}</div>
+          <div style="font-size:11.5px;color:var(--muted)">${i.time}</div></td>
+      <td><span class="badge ${i.mode==='Video Call'?'b-bl':'b-pu'}">
+        <i class="fas fa-${i.mode==='Video Call'?'video':'building'}"></i> ${i.mode}
+      </span></td>
+      <td style="font-size:13px">${i.interviewer}</td>
+      <td>${stars(i.rating)}</td>
+      <td><span class="badge ${i.status==='Completed'?'b-ok':'b-warn'}">${i.status}</span></td>
+      <td>${i.status==='Scheduled'
+        ?`<button class="btn btn-ok btn-sm" onclick="openDoneM(${i.interview_id})">
+            Mark Done</button>`
+        :`<span style="color:var(--ok);font-size:12px"><i class="fas fa-check"></i> Done</span>`}
+      </td>
+    </tr>`).join("");
+}
+
+function openDoneM(id) {
+  $("done-id").value = id;
+  openM("done-m");
+}
+
+async function schedInterview() {
+  const date = $("ni-date").value;
+  if(!date){ toast("Please select date","err"); return; }
+  const r = await API("/api/interviews", {
+    method:"POST",
+    body: JSON.stringify({
+      candidate_id: $("ni-cand").value,
+      job_id:       $("ni-job").value,
+      round:        $("ni-round").value,
+      mode:         $("ni-mode").value,
+      date:         date,
+      time:         $("ni-time").value,
+      interviewer:  $("ni-itvr").value,
+    })
+  });
+  closeM("int-m"); loadInterviews(); toast(r.message);
+}
+
+async function completeInterview() {
+  const id = $("done-id").value;
+  const r  = await API(`/api/interviews/${id}/complete`, {
+    method:"POST",
+    body: JSON.stringify({
+      rating:   parseInt($("done-rating").value),
+      feedback: $("done-fb").value || "Interview completed successfully.",
+    })
+  });
+  closeM("done-m"); loadInterviews(); toast(r.message);
+}
+
+// ── Hiring ────────────────────────────────────────
+async function loadHiring() {
+  const data = await API("/api/hiring");
+  $("hire-tbl").innerHTML = data.map(h=>`
+    <tr>
+      <td><div class="ci">
+        <div class="av">${h.photo}</div>
+        <div><div class="cn">${h.candidate_name}</div></div>
+      </div></td>
+      <td style="font-size:13px">${h.job_title}</td>
+      <td><span class="badge ${h.decision==='Selected'?'b-ok':'b-bad'}">
+        ${h.decision==='Selected'?'✅':'❌'} ${h.decision}
+      </span></td>
+      <td style="font-weight:600;color:var(--ok)">
+        ${h.offer_salary ? sal(h.offer_salary) : '–'}
+      </td>
+      <td style="font-size:13px">${h.decision_by}</td>
+      <td style="font-size:13px;color:var(--muted)">${h.decision_date}</td>
+      <td style="font-size:13px;color:var(--muted)">${h.joining_date||'–'}</td>
+    </tr>`).join("");
+
+  // Populate hiring modal dropdowns
+  if($("nh-cand").options.length===0){
+    const cands = await API("/api/candidates");
+    $("nh-cand").innerHTML = cands.map(c=>
+      `<option value="${c.candidate_id}">${c.name}</option>`).join("");
+  }
+  if($("nh-job").options.length===0){
+    const jobs = await API("/api/jobs");
+    $("nh-job").innerHTML = jobs.map(j=>
+      `<option value="${j.job_id}">${j.title}</option>`).join("");
+  }
+}
+
+async function addHiring() {
+  const r = await API("/api/hiring",{
+    method:"POST",
+    body: JSON.stringify({
+      candidate_id:  $("nh-cand").value,
+      job_id:        $("nh-job").value,
+      decision:      $("nh-dec").value,
+      offer_salary:  $("nh-sal").value||null,
+      decision_date: $("nh-ddate").value,
+      joining_date:  $("nh-jdate").value||null,
+      decision_by:   $("nh-by").value,
+    })
+  });
+  closeM("hire-m"); loadHiring(); toast(r.message);
+}
+
+// ── Analytics ─────────────────────────────────────
+async function loadAnalytics() {
+  const d = await API("/api/analytics");
+  $("an-dept").innerHTML  = chartBars(d.dept_data);
+  $("an-skill").innerHTML = chartBars(d.skill_data);
+  $("an-exp").innerHTML   = chartBars(d.exp_data);
+
+  const sc = d.score_dist;
+  const tot = sc.high + sc.medium + sc.low || 1;
+  $("an-score").innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+      ${[
+        {label:"High (≥80)", val:sc.high,   cls:"ok",   color:"var(--ok)"},
+        {label:"Mid (60-79)", val:sc.medium, cls:"warn", color:"var(--warn)"},
+        {label:"Low (<60)",   val:sc.low,    cls:"bad",  color:"var(--bad)"},
+      ].map(x=>`
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+            <span style="color:${x.color}">${x.label}</span>
+            <span>${x.val} (${Math.round(x.val/tot*100)}%)</span>
+          </div>
+          <div class="sbar-track" style="height:10px">
+            <div class="sbar-fill fill-${x.cls}" style="width:${(x.val/tot)*100}%"></div>
+          </div>
+        </div>`).join("")}
+      <div style="text-align:center;padding:14px;background:var(--card);border-radius:9px">
+        <div style="font-size:26px;font-weight:700;color:var(--p)">${sc.avg}</div>
+        <div style="font-size:11px;color:var(--muted)">Average AI Score</div>
+      </div>
+    </div>`;
+
+  const m = d.metrics;
+  $("an-metrics").innerHTML = [
+    {icon:"graduation-cap", label:"Avg CGPA",    value:m.avg_cgpa,           color:"var(--p)"},
+    {icon:"briefcase",      label:"Avg Exp",      value:m.avg_exp+" yrs",     color:"var(--ok)"},
+    {icon:"handshake",      label:"Hire Rate",    value:m.hire_rate+"%",      color:"var(--warn)"},
+    {icon:"file-alt",       label:"Applications", value:m.total_apps,         color:"var(--s)"},
+    {icon:"calendar-check", label:"Interviews",   value:m.interviews,         color:"var(--p)"},
+    {icon:"building",       label:"Departments",  value:m.departments,        color:"var(--ok)"},
+  ].map(x=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                padding:10px;background:var(--card);border-radius:9px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:32px;height:32px;border-radius:7px;
+                    background:${x.color}22;display:flex;align-items:center;
+                    justify-content:center;color:${x.color}">
+          <i class="fas fa-${x.icon}"></i>
+        </div>
+        <span style="font-size:12.5px;color:var(--muted)">${x.label}</span>
+      </div>
+      <strong style="color:${x.color}">${x.value}</strong>
+    </div>`).join("");
+}
+
+// ── Departments ───────────────────────────────────
+async function loadDepts() {
+  const data = await API("/api/departments");
+  $("dept-grid").innerHTML = data.map(d=>`
+    <div class="jcard">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <div class="ji">${deptIcons[d.dept_name]||"🏢"}</div>
+        <div>
+          <div class="jt" style="margin:0 0 3px">${d.dept_name}</div>
+          <div style="font-size:12px;color:var(--muted)">${d.location}</div>
+        </div>
+      </div>
+      <div class="g22" style="margin-bottom:12px">
+        <div style="text-align:center;padding:11px;background:var(--card);border-radius:9px">
+          <div style="font-size:22px;font-weight:700;color:var(--p)">${d.job_count}</div>
+          <div style="font-size:11px;color:var(--muted)">Open Jobs</div>
+        </div>
+        <div style="text-align:center;padding:11px;background:var(--card);border-radius:9px">
+          <div style="font-size:22px;font-weight:700;color:var(--ok)">${d.app_count}</div>
+          <div style="font-size:11px;color:var(--muted)">Applications</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--muted)">
+        <i class="fas fa-user-tie"></i> Head: ${d.head}
+      </div>
+      <div style="margin-top:10px"><span class="badge b-ok">Active</span></div>
+    </div>`).join("");
+}
+
+// ── Init ──────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>
